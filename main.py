@@ -10,6 +10,37 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import json
 
+def dropSlides(slidesToKeep, prs):
+    """Return a new presentation that has the correct slide subset.
+
+    Param:
+        - slidesToKeep: index of slides to keep from csv (int list)
+        - prs: presentation (pptx.presentation)
+
+    Return:
+        - presentation with new slide subset
+
+    """
+
+    # get slides to delete
+    indexesToRemove = [x for x in range(1, len(prs.slides._sldIdLst)+1) if x not in slidesToKeep]
+
+    # subset report
+    for i, slide in enumerate(prs.slides):
+        # create slide dict
+        id_dict = {slide.id: [i, slide.rId] for i, slide in enumerate(prs.slides._sldIdLst)}
+
+        # iterate thorugh indexes
+        if i+1 in indexesToRemove:
+            # get slide id
+            slide_id = slide.slide_id
+
+            # remove slide
+            prs.part.drop_rel(id_dict[slide_id][1])
+            del prs.slides._sldIdLst[id_dict[slide_id][0]]
+
+    return prs
+
 
 def delete_placeholders(slide):
     for placeholder in slide.shapes.placeholders:
@@ -25,6 +56,7 @@ def create_ppt(input, output, ppt_data): # report_data, chart
 
     print("一共{}张slide正在生成，其中默认第一页是Title第二页是目录".format(len(ppt_data["ppt_data"])))
     prs = Presentation(input)
+    dropSlides(list(),prs)
     # Use the output from analyze_ppt to understand which layouts and placeholders
     # to use
     # Create a title slide first
